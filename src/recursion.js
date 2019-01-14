@@ -114,7 +114,7 @@ var powerOfTwo = function(n) {
 
 // 9. Write a function that reverses a string.
 var reverse = function(string) {
-	if (string.length === 1) {
+	if (string.length === 1 || string.length === 0) {
 		return string;
 	} else {
 		return reverse(string.slice(1)) + string[0];
@@ -530,9 +530,7 @@ var numToText = function(str) {
 
 	let strRet = (arr.slice(1).join(' '));
 
-	return (!isNaN(Number(arr[0]))) ? 
-	(numNameRef[Number(arr[0])] + ' ' + numToText(strRet)) :
-	(arr[0] + ' ' + numToText(strRet));
+	return (!isNaN(Number(arr[0]))) ? (numNameRef[Number(arr[0])] + ' ' + numToText(strRet)) : (arr[0] + ' ' + numToText(strRet));
 };
 
 
@@ -573,7 +571,25 @@ var binarySearch = function(array, target, min, max) {
 // 39. Write a merge sort function.
 // mergeSort([34,7,23,32,5,62]) // [5,7,23,32,34,62]
 // https://www.khanacademy.org/computing/computer-science/algorithms/merge-sort/a/divide-and-conquer-algorithms
-var mergeSort = function(array) {
+var mergeSort = function(arr) {
+	
+	function merge(subLeft, subRight) {
+		let sorted = [];
+		while (subLeft.length > 0 && subRight.length > 0) {
+			sorted.push( (subLeft[0] < subRight[0]) ? subLeft.shift() : subRight.shift() );
+		}
+		return sorted.concat(subLeft.length ? subLeft : subRight);
+	}
+
+	if (arr.length < 2) {
+		return arr;
+	}
+
+	let mid = Math.floor(arr.length / 2);
+	let subLeft = mergeSort(arr.slice(0, mid));
+	let subRight = mergeSort(arr.slice(mid));
+
+	return merge(subLeft, subRight);
 };
 
 // 40. Deeply clone objects and arrays.
@@ -581,5 +597,53 @@ var mergeSort = function(array) {
 // var obj2 = clone(obj1);
 // console.log(obj2); // {a:1,b:{bb:{bbb:2}},c:3}
 // obj1 === obj2 // false
-var clone = function(input) {
+var clone = function(item) {
+	if (!item) { return item; } // null, undefined values check
+
+    let types = [ Number, String, Boolean ];
+    let result;
+
+    // normalizing primitives if someone did new String('aaa'), or new Number('444');
+    types.forEach(function(type) {
+        if (item instanceof type) {
+            result = type( item );
+        }
+    });
+
+    if (typeof result == "undefined") {
+        if (Object.prototype.toString.call( item ) === "[object Array]") {
+            result = [];
+            item.forEach(function(child, index, array) { 
+                result[index] = clone( child );
+            });
+        } else if (typeof item == "object") {
+            // testing that this is DOM
+            if (item.nodeType && typeof item.cloneNode == "function") {
+                result = item.cloneNode( true );    
+            } else if (!item.prototype) { // check that this is a literal
+                if (item instanceof Date) {
+                    result = new Date(item);
+                } else {
+                    // it is an object literal
+                    result = {};
+                    for (let i in item) {
+                        result[i] = clone( item[i] );
+                    }
+                }
+            } else {
+                // depending what you would like here,
+                // just keep the reference, or create new object
+                if (false && item.constructor) {
+                    // would not advice to do that, reason? Read below
+                    result = new item.constructor();
+                } else {
+                    result = item;
+                }
+            }
+        } else {
+            result = item;
+        }
+    }
+
+    return result;
 };
